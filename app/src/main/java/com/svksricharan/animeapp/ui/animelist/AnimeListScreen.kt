@@ -38,20 +38,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
-import coil.request.ImageRequest
 import com.svksricharan.animeapp.domain.model.Anime
 import com.svksricharan.animeapp.ui.components.ErrorScreen
 import com.svksricharan.animeapp.ui.components.ImagePlaceholder
@@ -63,7 +60,6 @@ import com.svksricharan.animeapp.utils.UiState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 
-// Start loading next page when user is within 5 items of the bottom
 private const val LOAD_MORE_THRESHOLD = 5
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -148,9 +144,6 @@ private fun AnimeList(
 ) {
     val listState = rememberLazyListState()
 
-    // Using snapshotFlow instead of derivedStateOf + LaunchedEffect because
-    // snapshotFlow + distinctUntilChanged guarantees exactly one emission per
-    // threshold crossing, even during fast flings.
     LaunchedEffect(listState) {
         snapshotFlow {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
@@ -227,23 +220,10 @@ private fun AnimeCard(
     showImages: Boolean,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-
-    // Memoize the image request so we don't rebuild it on every recomposition
-    val imageRequest = remember(anime.imageUrl) {
-        ImageRequest.Builder(context)
-            .data(anime.imageUrl)
-            .crossfade(300)
-            .build()
-    }
-
-    // Pre-compute this string so we don't redo the when() on every frame
-    val episodeText = remember(anime.episodes, anime.airing) {
-        when {
-            anime.episodes != null -> "${anime.episodes} episodes"
-            anime.airing == true -> "Airing"
-            else -> "Unknown episodes"
-        }
+    val episodeText = when {
+        anime.episodes != null -> "${anime.episodes} episodes"
+        anime.airing == true -> "Airing"
+        else -> "Unknown episodes"
     }
 
     Card(
@@ -262,8 +242,6 @@ private fun AnimeCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            // When images are toggled off (design constraint), we skip the poster
-            // entirely and let the text column take full width. Rank badge moves inline.
             if (showImages) {
                 Box(
                     modifier = Modifier
@@ -272,7 +250,7 @@ private fun AnimeCard(
                         .clip(RoundedCornerShape(12.dp))
                 ) {
                     SubcomposeAsyncImage(
-                        model = imageRequest,
+                        model = anime.imageUrl,
                         contentDescription = anime.title,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,

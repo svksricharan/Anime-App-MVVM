@@ -9,19 +9,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import com.svksricharan.animeapp.domain.network.NetworkMonitor
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 
-// Wraps ConnectivityManager so we don't scatter system service calls across the codebase.
-// Provides both a one-shot check and a reactive Flow for continuous monitoring.
-class NetworkHelper(private val context: Context) {
+class NetworkHelper(private val context: Context) : NetworkMonitor {
 
     private val connectivityManager: ConnectivityManager by lazy {
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    /** Thread-safe synchronous check — safe to call from any dispatcher */
-    fun isNetworkAvailable(): Boolean {
+    fun isNetworkAvailable(): Boolean = isCurrentlyConnected()
+
+    override fun isCurrentlyConnected(): Boolean {
         return try {
             val network = connectivityManager.activeNetwork ?: return false
             val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
@@ -31,9 +31,9 @@ class NetworkHelper(private val context: Context) {
         }
     }
 
-    // callbackFlow bridges the callback-based ConnectivityManager API into a Flow.
-    // distinctUntilChanged avoids re-emitting the same state on config changes.
-    fun observeNetworkState(): Flow<Boolean> = callbackFlow {
+    fun observeNetworkState(): Flow<Boolean> = observeConnectivity()
+
+    override fun observeConnectivity(): Flow<Boolean> = callbackFlow {
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 trySend(true)
@@ -59,8 +59,7 @@ class NetworkHelper(private val context: Context) {
 
         connectivityManager.registerNetworkCallback(request, callback)
 
-        // Emit current state immediately
-        trySend(isNetworkAvailable())
+        trySend(isCurrentlyConnected())
 
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)

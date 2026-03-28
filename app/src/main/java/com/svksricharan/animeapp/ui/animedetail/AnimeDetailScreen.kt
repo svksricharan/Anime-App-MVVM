@@ -234,9 +234,6 @@ private fun AnimeDetailContent(
     }
 }
 
-// Hero area at the top of the detail page.
-// Shows poster when images are on, title text when off.
-// Play button overlay appears regardless — tapping opens YouTube externally.
 @Composable
 private fun TrailerOrPoster(anime: Anime, showImages: Boolean) {
     val context = LocalContext.current
@@ -285,9 +282,6 @@ private fun TrailerOrPoster(anime: Anime, showImages: Boolean) {
             }
         }
 
-        // Trailer handling — the sealed class keeps this clean.
-        // InternalPlayer and ExternalLink both open YouTube externally
-        // because embedding in WebView gives Error 153.
         when (val action = anime.trailerAction) {
             is TrailerAction.InternalPlayer -> {
                 val watchUrl = remember(action.youtubeId) {
@@ -332,7 +326,6 @@ private fun TrailerOrPoster(anime: Anime, showImages: Boolean) {
             }
 
             is TrailerAction.None -> {
-                // No trailer data — poster only (or title if images off), no overlay
             }
         }
     }
@@ -363,8 +356,6 @@ private fun PlayButtonOverlay(onClick: () -> Unit) {
     }
 }
 
-// Synopsis can be long — collapse by default, show "Read more" if > 200 chars.
-// animateContentSize gives a smooth expand/collapse without manual animation code.
 @Composable
 private fun ExpandableText(
     text: String,

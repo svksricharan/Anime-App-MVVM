@@ -3,9 +3,9 @@ package com.svksricharan.animeapp.ui.animelist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.svksricharan.animeapp.data.repository.AnimeRepository
 import com.svksricharan.animeapp.domain.model.Anime
-import com.svksricharan.animeapp.utils.NetworkHelper
+import com.svksricharan.animeapp.domain.usecase.GetTopAnimePageUseCase
+import com.svksricharan.animeapp.domain.usecase.ObserveNetworkConnectivityUseCase
 import com.svksricharan.animeapp.utils.UiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AnimeListViewModel(
-    private val repository: AnimeRepository,
-    private val networkHelper: NetworkHelper
+    private val getTopAnimePageUseCase: GetTopAnimePageUseCase,
+    private val observeNetworkConnectivityUseCase: ObserveNetworkConnectivityUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState<List<Anime>>>(UiState.Loading)
@@ -24,20 +24,17 @@ class AnimeListViewModel(
     private val _isOffline = MutableStateFlow(false)
     val isOffline: StateFlow<Boolean> = _isOffline.asStateFlow()
 
-    // Separate loading state for pagination so the main screen doesn't flicker
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
 
-    // Tracks if the last page load failed — shows retry UI at bottom of list
     private val _paginationError = MutableStateFlow(false)
     val paginationError: StateFlow<Boolean> = _paginationError.asStateFlow()
 
     private var currentPage = 1
     private var hasNextPage = true
-    private var paginationJob: Job? = null   // separate from fetchJob so we can cancel them independently
     private var fetchJob: Job? = null
+    private var paginationJob: Job? = null
 
-    // We accumulate items across pages here — emitted as a snapshot via toList()
     private val allAnime = mutableListOf<Anime>()
 
     init {
@@ -56,7 +53,7 @@ class AnimeListViewModel(
         fetchJob = viewModelScope.launch {
             _uiState.value = UiState.Loading
 
-            repository.getTopAnime(page = 1, forceRefresh = forceRefresh).collect { result ->
+            getTopAnimePageUseCase(page = 1, forceRefresh = forceRefresh).collect { result ->
                 result.fold(
                     onSuccess = { paginated ->
                         allAnime.addAll(paginated.animeList)
@@ -75,19 +72,17 @@ class AnimeListViewModel(
     }
 
     fun loadNextPage() {
-        // Guard: don't load if we're already loading or there's nothing left
         if (!hasNextPage || _isLoadingMore.value) return
 
         _paginationError.value = false
 
         paginationJob = viewModelScope.launch {
             _isLoadingMore.value = true
-            val nextPage = currentPage + 1  // local var — only update currentPage on success
+            val nextPage = currentPage + 1
 
-            repository.getTopAnime(page = nextPage, forceRefresh = false).collect { result ->
+            getTopAnimePageUseCase(page = nextPage, forceRefresh = false).collect { result ->
                 result.fold(
                     onSuccess = { paginated ->
-                        // Filter dupes — API sometimes returns overlapping items across pages
                         val newItems = paginated.animeList.filter { anime ->
                             allAnime.none { it.id == anime.id }
                         }
@@ -110,10 +105,9 @@ class AnimeListViewModel(
         loadNextPage()
     }
 
-    // Auto-retry when connectivity comes back and we're stuck on an error screen
     private fun observeNetworkState() {
         viewModelScope.launch {
-            networkHelper.observeNetworkState().collect { isConnected ->
+            observeNetworkConnectivityUseCase().collect { isConnected ->
                 _isOffline.value = !isConnected
                 if (isConnected && _uiState.value is UiState.Error) {
                     fetchTopAnime(forceRefresh = true)
@@ -123,13 +117,16 @@ class AnimeListViewModel(
     }
 
     class Factory(
-        private val repository: AnimeRepository,
-        private val networkHelper: NetworkHelper
+        private val getTopAnimePageUseCase: GetTopAnimePageUseCase,
+        private val observeNetworkConnectivityUseCase: ObserveNetworkConnectivityUseCase
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AnimeListViewModel::class.java)) {
-                return AnimeListViewModel(repository, networkHelper) as T
+                return AnimeListViewModel(
+                    getTopAnimePageUseCase,
+                    observeNetworkConnectivityUseCase
+                ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

@@ -1,17 +1,19 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    kotlin("kapt")
+    alias(libs.plugins.androidapplication)
+    alias(libs.plugins.legacykapt)
+    alias(libs.plugins.kotlincompose)
 }
 
 android {
     namespace = "com.svksricharan.animeapp"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.svksricharan.animeapp"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -33,16 +35,16 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -56,28 +58,22 @@ dependencies {
     implementation(libs.composematerial3)
     implementation(libs.materialiconsextended)
 
-    // Image loading
     implementation(libs.coilcompose)
 
-    // Networking
     implementation(libs.retrofit)
     implementation(libs.convertergson)
     implementation(libs.okhttplogging)
     implementation(libs.gson)
 
-    // Lifecycle & ViewModel
     implementation(libs.lifecycleviewmodelcompose)
     implementation(libs.lifecycleruntimecompose)
 
-    // Navigation
     implementation(libs.navigationcompose)
 
-    // Room
     implementation(libs.roomruntime)
     implementation(libs.roomktx)
     kapt(libs.roomcompiler)
 
-    // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockito)
     testImplementation(libs.archcoretesting)

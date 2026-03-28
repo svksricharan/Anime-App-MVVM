@@ -13,15 +13,12 @@ import com.svksricharan.animeapp.AnimeApplication
 import com.svksricharan.animeapp.ui.navigation.AppNavigation
 import com.svksricharan.animeapp.ui.theme.AnimeAppTheme
 
-// Single activity — all screens are Compose destinations managed by Navigation Compose
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Edge-to-edge — lets content draw behind the status bar for a modern look
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Grab the DI container that was initialized in AnimeApplication
         val appContainer = (application as AnimeApplication).appContainer
 
         setContent {

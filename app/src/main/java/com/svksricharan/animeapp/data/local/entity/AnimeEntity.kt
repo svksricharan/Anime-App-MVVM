@@ -3,8 +3,6 @@ package com.svksricharan.animeapp.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-// Flat table — genres stored as comma-separated string to avoid a junction table.
-// For a bigger app I'd normalize this, but for ~25 items/page it's fine.
 @Entity(tableName = "anime")
 data class AnimeEntity(
     @PrimaryKey val malId: Int,
@@ -29,6 +27,6 @@ data class AnimeEntity(
     val popularity: Int?,
     val season: String?,
     val year: Int?,
-    val page: Int = 1,             // which API page this came from — used for paginated cache queries
+    val page: Int = 1,
     val lastUpdated: Long = System.currentTimeMillis()
 )

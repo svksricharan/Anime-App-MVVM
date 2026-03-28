@@ -4,14 +4,6 @@ import com.svksricharan.animeapp.data.local.entity.AnimeEntity
 import com.svksricharan.animeapp.domain.model.Anime
 import com.svksricharan.animeapp.domain.model.TrailerAction
 
-// Mapping lives here so that API changes don't ripple into the UI.
-// Three conversion paths:
-//   1. DTO -> Entity   (cache to Room after API call)
-//   2. DTO -> Domain   (network-first path, skip Room read)
-//   3. Entity -> Domain (offline fallback path)
-
-// ── DTO → Entity (for Room caching) ─────────────────────────────────
-
 fun AnimeDto.toEntity(page: Int = 1): AnimeEntity {
     return AnimeEntity(
         malId = malId,
@@ -40,8 +32,6 @@ fun AnimeDto.toEntity(page: Int = 1): AnimeEntity {
     )
 }
 
-// ── DTO → Domain (network-first path) ───────────────────────────────
-
 fun AnimeDto.toDomain(): Anime {
     return Anime(
         id = malId,
@@ -62,8 +52,6 @@ fun AnimeDto.toDomain(): Anime {
     )
 }
 
-// ── Entity → Domain (cache fallback path) ───────────────────────────
-
 fun AnimeEntity.toDomain(): Anime {
     return Anime(
         id = malId,
@@ -83,11 +71,6 @@ fun AnimeEntity.toDomain(): Anime {
         trailerAction = resolveTrailerAction(trailerYoutubeId, trailerUrl, trailerEmbedUrl)
     )
 }
-
-// ── Trailer priority resolution ─────────────────────────────────────
-// YouTube blocks embed_url in WebViews (Error 153), so we prefer youtube_id
-// or direct url which can open in the YouTube app. embed_url is treated
-// as "unavailable" since it won't play reliably on Android.
 
 private fun resolveTrailerAction(trailer: Trailer?): TrailerAction {
     return when {
@@ -110,11 +93,3 @@ private fun resolveTrailerAction(
         else -> TrailerAction.None
     }
 }
-
-// ── Paginated result wrapper ────────────────────────────────────────
-
-data class PaginatedResult(
-    val animeList: List<Anime>,
-    val currentPage: Int,
-    val hasNextPage: Boolean
-)

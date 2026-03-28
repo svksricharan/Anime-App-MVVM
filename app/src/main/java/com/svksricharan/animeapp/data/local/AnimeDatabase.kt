@@ -7,9 +7,6 @@ import androidx.room.RoomDatabase
 import com.svksricharan.animeapp.data.local.dao.AnimeDao
 import com.svksricharan.animeapp.data.local.entity.AnimeEntity
 
-// Using fallbackToDestructiveMigration because the schema changed a few times
-// during development (added page column, trailer fields, etc). For production
-// I'd write proper migrations, but for an assignment this keeps things clean.
 @Database(
     entities = [AnimeEntity::class],
     version = 1,
@@ -19,7 +16,6 @@ abstract class AnimeDatabase : RoomDatabase() {
 
     abstract fun animeDao(): AnimeDao
 
-    // Thread-safe singleton — double-checked locking pattern
     companion object {
         @Volatile
         private var INSTANCE: AnimeDatabase? = null
@@ -30,9 +26,7 @@ abstract class AnimeDatabase : RoomDatabase() {
                     context.applicationContext,
                     AnimeDatabase::class.java,
                     "anime_database"
-                )
-                    .fallbackToDestructiveMigration()
-                    .build()
+                ).build()
                 INSTANCE = instance
                 instance
             }

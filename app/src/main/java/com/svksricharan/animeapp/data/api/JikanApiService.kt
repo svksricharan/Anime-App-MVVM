@@ -6,13 +6,12 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-// Only two endpoints needed — list and detail.
 interface JikanApiService {
 
     @GET("top/anime")
     suspend fun getTopAnime(
         @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 25     // Jikan default is 25, making it explicit
+        @Query("limit") limit: Int = 25
     ): TopAnimeResponse
 
     @GET("anime/{id}")

@@ -125,8 +125,6 @@ fun ScoreBadge(score: Double? = 0.0, modifier: Modifier = Modifier) {
     }
 }
 
-
-// Shimmer placeholder while images load — gives visual feedback instead of a blank box
 @Preview
 @Composable
 fun ImagePlaceholder(modifier: Modifier = Modifier) {

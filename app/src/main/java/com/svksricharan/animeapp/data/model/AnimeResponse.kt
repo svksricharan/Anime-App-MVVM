@@ -2,10 +2,6 @@ package com.svksricharan.animeapp.data.model
 
 import com.google.gson.annotations.SerializedName
 
-// DTOs that map 1:1 to Jikan API JSON responses.
-// These stay in the data layer — UI never touches them directly.
-// See Mappers.kt for DTO -> Domain conversions.
-
 data class TopAnimeResponse(
     @SerializedName("pagination") val pagination: Pagination?,
     @SerializedName("data") val data: List<AnimeDto>
@@ -66,8 +62,6 @@ data class ImageUrls(
     @SerializedName("large_image_url") val largeImageUrl: String?
 )
 
-// Jikan gives us 3 different trailer fields with varying availability.
-// We resolve which one to use in Mappers.kt (see resolveTrailerAction).
 data class Trailer(
     @SerializedName("youtube_id") val youtubeId: String?,
     @SerializedName("url") val url: String?,

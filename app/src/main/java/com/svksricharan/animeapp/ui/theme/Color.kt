@@ -8,7 +8,6 @@ val Pink80 = Color(0xFFEFB8C8)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Anime App custom colors
 val DeepBlue = Color(0xFF1A237E)
 val AccentBlue = Color(0xFF2962FF)
 val DarkSurface = Color(0xFF121212)
